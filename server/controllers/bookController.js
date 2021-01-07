@@ -7,6 +7,10 @@ export function createBook(req, res) {
   console.log(req.files["file"][0].filename);
   console.log(req.files["image"][0].filename);
   var user = req.cookies.user;
+  const obj_category = {
+    _id: req.body.category_id,
+    name: req.body.category_name,
+  };
   const book = new Book({
     _id: mongoose.Types.ObjectId(),
     name: req.body.name,
@@ -17,7 +21,11 @@ export function createBook(req, res) {
     content: req.body.content,
     file: req.files["file"][0].filename,
     image: req.files["image"][0].filename,
-    category_id: req.body.category_id,
+    rating: req.body.rating,
+    language: req.body.language,
+    pageNo: req.body.pageNo,
+    readed: req.body.readed,
+    category: obj_category,
     created_by: user.user_name,
     updated_at: null,
     updated_by: null,
@@ -44,13 +52,14 @@ export function createBook(req, res) {
 export function getAllBook(req, res) {
   let title = req.query.title;
   let books;
-  if(title) {
-    books = Book.find({title: title})
-  }else{
-    books = Book.find()
+  if (title) {
+    books = Book.find({ title: title });
+  } else {
+    books = Book.find();
   }
-    books.select(
-      "id name author title description published_at content file image category_id"
+  books
+    .select(
+      "id name author title description published_at content file image rating language pageNo readed category"
     )
     .then((books) => {
       return res.status(200).json({
@@ -91,7 +100,7 @@ export function getsingleBook(req, res) {
 // Update book
 export function updateBook(req, res) {
   var user = req.cookies.user;
-  const id = req.params.post_id;
+  const id = req.params.book_id;
   const update_object = req.body;
   update_object.updated_by = user.user_name;
   update_object.updated_at = new Date();
@@ -99,9 +108,10 @@ export function updateBook(req, res) {
     update_object.file = req.files["file"][0].filename;
   }
   if (req.files["image"]) {
-    update_object.file = req.files["image"][0].filename;
+    update_object.image = req.files["image"][0].filename;
   }
-  Book.update({ _id: id }, { $set: update_object })
+  console.log(update_object);
+  Book.updateOne({ _id: id }, { $set: update_object })
     .exec()
     .then(() => {
       res.status(200).json({
@@ -121,7 +131,7 @@ export function updateBook(req, res) {
 
 // Delete book
 export function deleteBook(req, res) {
-  const id = req.params.post_id;
+  const id = req.params.book_id;
   Book.findByIdAndRemove(id)
     .exec()
     .then((book) => {

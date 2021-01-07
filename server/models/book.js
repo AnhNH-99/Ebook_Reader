@@ -39,9 +39,25 @@ const bookSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  category_id: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Category",
+  rating: {
+    type: Number,
+    required: true,
+  },
+  language: {
+    type: String,
+    required: true,
+  },
+  pageNo: {
+    type: Number,
+    required: true,
+  },
+  readed: {
+    type: Number,
+    required: true,
+  },
+  category: {
+    _id: mongoose.Schema.Types.ObjectId,
+    name: String,
   },
   status: {
     type: Boolean,

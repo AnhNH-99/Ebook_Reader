@@ -76,8 +76,8 @@ export function updateCategory(req, res) {
   const id = req.params.category_id;
   const update_object = req.body;
   update_object.updated_by = user.user_name;
-  update_object.updated_at = Date.now;
-  Category.update({ _id: id }, { $set: update_object })
+  update_object.updated_at = new Date();
+  Category.updateOne({ _id: id }, { $set: update_object })
     .exec()
     .then(() => {
       res.status(200).json({

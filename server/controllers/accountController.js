@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import md5 from "md5";
 import Account from "../models/account.js";
 import jwt from "jsonwebtoken";
-import {verifyJwtToken} from "../utils.js";
+import { verifyJwtToken } from "../utils.js";
 const tokenList = {};
 
 // Create new account
@@ -66,7 +66,7 @@ export function getSingleAccount(req, res) {
     .then((singleAccount) => {
       res.status(200).json({
         success: true,
-        message: "More on "+singleAccount.user_name,
+        message: "More on " + singleAccount.user_name,
         Account: singleAccount,
       });
     })
@@ -85,12 +85,13 @@ export function updateAccount(req, res) {
   const id = req.params.account_id;
   const updateObject = req.body;
   updateObject.updated_by = user.user_name;
-  updateObject.updated_at = Date.now;
-  if(req.body.password){
+  updateObject.updated_at = new Date();
+  console.log(updateObject);
+  if (req.body.password) {
     updateObject.password = md5(req.body.password);
   }
   console.log(req.body.password);
-  Account.update({ _id: id }, { $set: updateObject })
+  Account.updateOne({ _id: id }, { $set: updateObject })
     .exec()
     .then(() => {
       res.status(200).json({
@@ -143,18 +144,26 @@ export function login(req, res) {
           res.cookie("user", user);
           req.session.User = user;
           console.log(req.session.User);
-          const accessToken = jwt.sign({user: user}, process.env.ACCESS_TOKEN_SECRET,{
-            expiresIn: process.env.TOKEN_LIFE
-          });
-          const refreshToken = jwt.sign({user: user}, process.env.ACCESS_REFRESH_TOKEN_SECRET,{
-            expiresIn: process.env.REFRESH_TOKEN_LIFE
-          } );
+          const accessToken = jwt.sign(
+            { user: user },
+            process.env.ACCESS_TOKEN_SECRET,
+            {
+              expiresIn: process.env.TOKEN_LIFE,
+            }
+          );
+          const refreshToken = jwt.sign(
+            { user: user },
+            process.env.ACCESS_REFRESH_TOKEN_SECRET,
+            {
+              expiresIn: process.env.REFRESH_TOKEN_LIFE,
+            }
+          );
           tokenList[refreshToken] = user;
           res.status(200).json({
             success: true,
             message: "Logged in successfully",
             accessToken,
-             refreshToken
+            refreshToken,
           });
         } else {
           res.status(500).json({
@@ -177,7 +186,7 @@ export function login(req, res) {
 export function changePassword(req, res) {
   const id = req.params.account_id;
   const password_new = md5(req.body.password_new);
-  Account.findByIdAndUpdate(id,  {password:password_new} )
+  Account.findByIdAndUpdate(id, { password: password_new })
     .exec()
     .then(() => {
       res.status(200).json({
@@ -195,9 +204,9 @@ export function changePassword(req, res) {
 }
 
 // RefreshToken
-export function refreshToken(req, res){
+export function refreshToken(req, res) {
   const { refreshToken } = req.body;
-  if ((refreshToken) && (refreshToken in tokenList)) {
+  if (refreshToken && refreshToken in tokenList) {
     try {
       // Kiểm tra mã Refresh token
       verifyJwtToken(refreshToken, process.env.ACCESS_REFRESH_TOKEN_SECRET);
@@ -209,46 +218,50 @@ export function refreshToken(req, res){
       });
       const response = {
         token,
-      }
+      };
       res.status(200).json(response);
     } catch (err) {
       console.error(err);
       res.status(403).json({
-        message: 'Invalid refresh token',
+        message: "Invalid refresh token",
       });
     }
   } else {
     res.status(400).json({
-      message: 'Invalid request',
+      message: "Invalid request",
     });
   }
 }
 
-export function logout(req, res){
+export function logout(req, res) {
   const authHeader = req.headers.authorization;
-  const token = req.body.token || req.query.token || req.headers['x-access-token']||authHeader.split(' ')[1];
+  const token =
+    req.body.token ||
+    req.query.token ||
+    req.headers["x-access-token"] ||
+    authHeader.split(" ")[1];
   if (token) {
     // Xác thực mã token và kiểm tra thời gian hết hạn của mã
     try {
-      jwt.destroy(token)
+      jwt.destroy(token);
       res.status(200).json({
         success: true,
         message: "logout in successfully",
         accessToken,
-         refreshToken
+        refreshToken,
       });
       next();
     } catch (err) {
       // Giải mã gặp lỗi: Không đúng, hết hạn...
       console.error(err);
       return res.status(401).json({
-        message: 'Unauthorized access.',
+        message: "Unauthorized access.",
       });
     }
   } else {
     // Không tìm thấy token trong request
     return res.status(403).send({
-      message: 'No token provided.',
+      message: "No token provided.",
     });
   }
 }
