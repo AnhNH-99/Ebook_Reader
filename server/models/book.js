@@ -56,8 +56,8 @@ const bookSchema = new mongoose.Schema({
     required: true,
   },
   category: {
-    _id: mongoose.Schema.Types.ObjectId,
-    name: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'category'
   },
   status: {
     type: Boolean,

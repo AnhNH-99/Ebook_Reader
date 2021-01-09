@@ -1,5 +1,5 @@
 node_modules
-.pdf
-.jpg
-.png
-.gif
+*.pdf
+*.jpg
+*.png
+*.gif

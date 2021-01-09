@@ -1,16 +1,12 @@
 import mongoose from "mongoose";
 import Book from "../models/book.js";
 import date from "date-and-time";
-
+import Category from "../models/category.js";
 // Create book
 export function createBook(req, res) {
   console.log(req.files["file"][0].filename);
   console.log(req.files["image"][0].filename);
   var user = req.cookies.user;
-  const obj_category = {
-    _id: req.body.category_id,
-    name: req.body.category_name,
-  };
   const book = new Book({
     _id: mongoose.Types.ObjectId(),
     name: req.body.name,
@@ -25,7 +21,7 @@ export function createBook(req, res) {
     language: req.body.language,
     pageNo: req.body.pageNo,
     readed: req.body.readed,
-    category: obj_category,
+    category: req.body.category_id,
     created_by: user.user_name,
     updated_at: null,
     updated_by: null,
@@ -33,10 +29,27 @@ export function createBook(req, res) {
   return book
     .save()
     .then((book_new) => {
-      return res.status(201).json({
-        success: true,
-        message: "New book created successfully",
-        book: book_new,
+      const category = Category.findById(book_new.category._id).then((category) => {
+        const books = category.books;
+        books.push(book_new._id);
+        const update_object = { "books": books };
+        update_object.updated_by = user.user_name;
+        update_object.updated_at = new Date();
+        Category.updateOne({ _id: category._id }, { $set: update_object })
+          .exec()
+          .then(() => {
+            return res.status(201).json({
+              success: true,
+              message: "New book created successfully",
+              book: book_new,
+            });
+          })
+          .catch((error) => {
+            res.status(500).json({
+              success: false,
+              message: "Server error. Please try agian.",
+            });
+          });
       });
     })
     .catch((error) => {
@@ -55,13 +68,11 @@ export function getAllBook(req, res) {
   if (title) {
     books = Book.find({ title: title });
   } else {
-    books = Book.find();
+    books = Book.find().populate('category');
   }
   books
-    .select(
-      "id name author title description published_at content file image rating language pageNo readed category"
-    )
     .then((books) => {
+      console.log(books);
       return res.status(200).json({
         success: true,
         message: "A list of book",

@@ -32,13 +32,12 @@ export function createCategory(req, res) {
 
 // Get all category
 export function getAllCategory(req, res) {
-  Category.find()
-    .select("id name")
+  Category.find().select("id, name")
     .then((categoryies) => {
       return res.status(200).json({
         success: true,
         message: "A list of all category",
-        Categorys: categoryies,
+        Categories: categoryies,
       });
     })
     .catch((error) => {
@@ -53,7 +52,7 @@ export function getAllCategory(req, res) {
 // Get single category
 export function getSingleCategory(req, res) {
   const id = req.params.category_id;
-  Category.findById(id)
+  Category.findById(id).populate('books')
     .then((category) => {
       return res.status(200).json({
         success: true,
